@@ -33,7 +33,7 @@
 - filter on the fly, to be more efficient?
 
 
-## 2.2. Applying TM #
+## Applying TM 
 @apply_tm.py
 
 

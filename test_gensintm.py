@@ -59,8 +59,9 @@ for idx in range(len(docs)):
 
 
 len(docs)
+type(docs)
+type(docs[0])
 
-docs[0]
 
 from gensim.corpora import Dictionary
 
