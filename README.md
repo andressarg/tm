@@ -1,27 +1,22 @@
-############
-# TM paper #
-############
-
-1.	Data pre-processing
-1.1.	Data collection
-1.2.	Data cleaning
-1.3.	Tokenization and tagging
+# TM paper
 
 
-2.	Data analysis
-2.1.	Data “manipulation”:
-2.1.1.	Removing stop words 
-2.1.2.	Lemmatizing
-2.1.3.	Grouping texts differently
+1. Data pre-processing
+    1. Data collection
+    2. Data cleaning
 
-2.2.	Applying statistics
-2.2.1.	Choosing a method and setting parameters
+2. Data preparation
+    1. Tokenization and tagging (POS, lematization, NER)
+    2. Removing stop words and other unwanted tokens
+    3. Grouping texts differently
+
+3. Applying statistics
+    1. Choosing a method and setting parameters
 
 
-# ==================== #
-# 1.1. Data collection #
-# 1.2. Data cleaning   #
+-----
 
+## Data collection and Data cleaning
 @get_gutemberg.py
 
 - keep original data (as obtained from source)
@@ -31,14 +26,12 @@
 - sometimes the same data content is available in different formats. it is a good idea to test extracting two different formats to get an idea which one will be better for the project.
 - in our case, getting the data from html format sounds better and easier to (a) preserve the sections boundaries (b) to make cleaning easier
 
+-----
+## Tokenization and Tagging with Spacy and removing unwanted words (creating bag of words)
+@create_bow.py
+- generate bag of words
+- filter on the fly, to be more efficient?
 
-# ============================= #
-# 1.3. Tokenization and Tagging #
 
-- There are better ways to perform preprocessing than just lower-casing and splitting by space. Effective preprocessing is beyond the scope of this tutorial: if you’re interested, check out the gensim.utils.simple_preprocess() function.
-
-
-# ================= #
-# 2.2. Applying TM #
-
+## 2.2. Applying TM #
 @apply_tm.py
