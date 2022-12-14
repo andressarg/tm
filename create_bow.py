@@ -22,14 +22,14 @@ file_list = utilsNLP.get_file_list('input')
 
 
 # Cleaning
-# list of POS to be removed
+# list of elements to be removed
 # we can add here our own
-# stop list
-# and use the NER to remove name of places
-removal= ['PUNCT', 'DET', 'SPACE', 'NUM', 'SYM']
+pos_rm = ['PUNCT', 'DET', 'SPACE', 'NUM', 'SYM']
+ner_rm = ['PER', 'LOC']
 
-# create empty df
-df = pd.DataFrame(columns = ['tokens'])
+# create empty df to store the different bow
+df = pd.DataFrame(columns = ['all_tokens', 'full_clean', 'custom_tok'])
+
 
 
 for val in file_list:
@@ -37,85 +37,43 @@ for val in file_list:
     with open(val, 'r', encoding='utf-8') as f:
         text_org = f.read()
     
+    # remove line breaks
+    text_oneline = text_org.replace("\n", " ")
+
     # apply model
     nlp_text = nlp(text_org)
 
-    # TODO consider creating different bags of words (with stop words, without NER names, etc...)
-    # examples:
-    # - remove numbers, but not words that contain numbers.
-    # - Remove words that are only one character.
+    # create a list to store the NER labes to be 
+    ne2rm = []
+    for ent in nlp_text.ents:
+        if ent.label_ in ner_rm:
+            ne2rm.append(ent.text.lower())
 
-    # get all tokens that are not in the removel list neither in the stop list and that is alpha
-    tok = [token.lemma_.lower() for token in nlp_text if token.pos_ not in removal and not token.is_stop and token.is_alpha]
+    # get lis of unique values for the ner found
+    ne2rm = list(set(ne2rm))
 
-    df.loc[val.stem] = [tok]
+    # other possibilities
+    # - remove numbers, but not words that contain numbers...
+    # - Remove words that are only one character...
 
+    # # get all tokens that are not in the removel list neither in the stop list and that is alpha
+    # tok = [token.lemma_.lower() for token in nlp_text if token.pos_ not in pos_rm and not token.is_stop and token.is_alpha]
 
-# # map each token to a unique ID (applying the Dictionary Object from Gensim)
-# dictionary = Dictionary(df['tokens'])
+    # all tokens (no space)
+    all_tokens = [token.text.lower() for token in nlp_text if token.pos_ != 'SPACE']
 
-# # see toknes and ids
-# print(dictionary.token2id)
+    # get all lemma that are not in the removel list neither in the stop list and that is alpha (not letters)
+    full_clean = [token.lemma_.lower() for token in nlp_text if token.pos_ not in pos_rm and not token.is_stop and token.is_alpha]
 
+    # remove locations and named person/family
+    custom_tok = [token.text.lower() for token in nlp_text if token.text.lower() not in ne2rm and token.pos_ != 'SPACE']
 
-# # filter dictionary
-# # dictionary.filter_extremes(no_below=5, no_above=0.5, keep_n=1000)
-# dictionary.filter_extremes(no_below=1, no_above=0.8, keep_n=None)
-# '''
-# no_below: remove tokens that appear in less than n documents
-# no_above: remove tokens that appear in more than n% of the corpus
-# keep_n: keep the N most frequent token (‘None’ keeps all)
-# '''
+    df.loc[val.stem] = [all_tokens, full_clean, custom_tok]
 
-
-# rascunho
-
-# create empty df
-df = pd.DataFrame(columns = ['all_tokens', 'full_clean', 'custom_tok'])
+#write df
+df
 
 
-val = 'input/book31971.txt'
-with open(val, 'r', encoding='utf-8') as f:
-    text_org = f.read()
-
-# remove line breaks
-text_oneline = text_org.replace("\n", " ")
-
-# apply model
-nlp_text = nlp(text_oneline)
-
-# get NER for person
-'''
-to see named entity labels and their explanation
-nlp.get_pipe("ner").labels
-spacy.explain('LOC')
-spacy.explain('MISC')
-spacy.explain('ORG')
-spacy.explain('PER')
-'''
-
-ner_rm = []
-for ent in nlp_text.ents:
-    if ent.label_ == 'PER':
-        ner_rm.append(ent.text.lower())
-
-# get lis of unique values for the ner found
-ner_rm = list(set(ner_rm))
-
-
-# all tokens (no space)
-all_tokens = [token.text.lower() for token in nlp_text if token.pos_ != 'SPACE'] #
-
-# get all lemma that are not in the removel list neither in the stop list and that is alpha (not letters)
-full_clean = [token.lemma_.lower() for token in nlp_text if token.pos_ not in removal and not token.is_stop and token.is_alpha]
-
-# remove locations and named person/family
-custom_tok = [token.text.lower() for token in nlp_text if token.text.lower() not in ner_rm and token.pos_ != 'SPACE']
-
-
-
-# df.loc[val.stem] = [tok]
-df.loc[val[10:15]] = [all_tokens, full_clean, custom_tok]
 
 
 bow_coll = []
