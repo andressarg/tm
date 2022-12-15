@@ -55,9 +55,6 @@ for val in file_list:
     # - remove numbers, but not words that contain numbers...
     # - Remove words that are only one character...
 
-    # # get all tokens that are not in the removel list neither in the stop list and that is alpha
-    # tok = [token.lemma_.lower() for token in nlp_text if token.pos_ not in pos_rm and not token.is_stop and token.is_alpha]
-
     # all tokens (no space)
     all_tokens = [token.text.lower() for token in nlp_text if token.pos_ != 'SPACE']
 
@@ -66,7 +63,9 @@ for val in file_list:
 
     # remove locations and named person/family
     # custom_tok = [token.text.lower() for token in nlp_text if token.text.lower() not in ne2rm and token.pos_ != 'SPACE']
-    custom_tok = [token.text.lower() for token in nlp_text if token.text.lower() not in ne2rm and token.text.lower() not in wrd_rm and token.pos_ != 'SPACE' and not token.is_stop]
+    # custom_tok = [token.text.lower() for token in nlp_text if token.text.lower() not in ne2rm and token.text.lower() not in wrd_rm and token.pos_ != 'SPACE' and not token.is_stop]
+
+    custom_tok = [token.text.lower() for token in nlp_text if token.text.lower() not in ne2rm and token.text.lower() not in wrd_rm and token.pos_ not in pos_rm and not token.is_stop]
 
     df.loc[val.stem] = [all_tokens, full_clean, custom_tok]
 
@@ -77,24 +76,24 @@ df.to_csv('output/bows.tsv', sep='\t', encoding='utf-8')
 # come back here and try to solve it
 # Compute bigrams.
 from gensim.models import Phrases
-import copy
-dfcopy = copy.deepcopy(df)
+# import copy
+# dfcopy = copy.deepcopy(df)
 
 
-bow = dfcopy['all_tokens']
+bow = df['all_tokens']
+
+len(bow[0]) # 1369489
+len(df['all_tokens'][0]) # 1369489
+
 bigrams = Phrases(bow, min_count=5)
-
-len(bow[0]) # 169310 | 180609
-len(df['all_tokens'][0])
-
 
 for idx in range(len(bow)):
     for token in bigrams[bow[idx]]:
         if '_' in token:
+            print(token)
             # Token is a bigram, add to document.
             bow[idx].append(token)
 
-
-
+type(bow)
 
 

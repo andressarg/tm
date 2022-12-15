@@ -1,18 +1,40 @@
 """
-get text straight from gutemberg
-look at:
-- https://pypi.org/project/Gutenberg/
-- https://superfastpython.com/threadpoolexecutor-download-books/
-- 
+Replicability and transparency in topic modelling: developing best practice guidelines for the digital humanities
+Copyright (c) 2023 [Andressa Gomide, Mathew Gillings, Diego Gimenez]
+This file is part of Gomide et al. 2023.
+This project is licensed under the terms of the MIT license.
 """
-import re
-from urllib.request import urlopen
-from bs4 import BeautifulSoup # chose this libary for its user friendliness
 
-'''
-download content
-'''
+""" @get_gutemberg
+This script download books from the Gutemberg Project (https://www.gutenberg.org/), 
+removes unecessary elements (e.g. boilerplates, page numbers),
+extract the metadata for each book
+and saves:
+- the original book file (html)
+- the cleaned content (txt)
+- the metadata (tsv)
+
+
+Functions in this file
+    * download_url - it takes an argument: 
+    a string with with url path
+    and returns the content of the url as bytes
+"""
+
+# import libraries
+import re # for regular expressions
+from urllib.request import urlopen # to request the content from the internet
+from bs4 import BeautifulSoup # to work with html files (bs4 is known to be user friendly)
+
+
 def download_url(urlpath):
+    ''' 
+    download content from an url address
+    Args: 
+        urlpath (str): the url path
+    Returns:
+        connection.read() (bytes): the content of the page 
+    '''
     try:
         # open a connection to the server
         with urlopen(urlpath, timeout=3) as connection:
@@ -24,10 +46,12 @@ def download_url(urlpath):
 
 
 # set the book id
+
 book_id = "44540" # cinco minutos j de alencar
 book_id = "55682" # quincas borba machado
 book_id = "31971" # o crime do padre amaro eca de queiros
 ##########################
+
 # from plain text
 # url for plain text book
 url_plain = f'https://www.gutenberg.org/cache/epub/{book_id}/pg{book_id}.txt'

@@ -1,7 +1,7 @@
 # import libraries
 import pandas as pd 
 from gensim.corpora.dictionary import Dictionary 
-from gensim.models import LdaMulticore # qual a diferenca?
+#from gensim.models import LdaMulticore # qual a diferenca?
 from gensim.models import LdaModel
 import pyLDAvis.gensim_models
 import pyLDAvis # ver erro
@@ -14,7 +14,7 @@ df = pd.read_csv('output/bows.tsv',sep = '\t',  index_col=0)
 # df.columns
 # convert values to list
 # fc_list = df['full_clean'].tolist()
-fc_list = df['full_clean'].apply(eval)
+# fc_list = df['full_clean'].apply(eval)
 ct_list = df['custom_tok'].apply(eval)
 
 # map each token to a unique ID (applying the Dictionary Object from Gensim)
@@ -47,12 +47,35 @@ print('Number of types: %d' % len(dictionary))
 print('Number of documents: %d' % len(corpus))
 
 
+
+# TODO 
+# FINDING OPTIMAL NUMBER OF TOPICS
+
+'''
+After training the model, we should evaluate it.
+We can use coherence score for that
+
+"The score measures the degree of semantic similarity between high scoring words in each topic." 
+
+In this fashion, a coherence score can be computed for each iteration by inserting a varying number of topics.
+
+Algorithms to calculate coherence score: C_v, C_p, C_uci, C_umass, C_npmi, C_a, ...
+
+gensim library makes this calculation easier
+
+Coherence score for C_v ranges from 0 (complete incoherence) to 1 (complete coherence).
+> 0.5 = fairly good (Doing Computational Social Science: A Practical Introduction By John McLevey).
+
+'''
+
+
+
 ############
 # LdaModel #
 ############
 
 # Set training parameters.
-num_topics = 5
+num_topics = 4
 chunksize = 2000
 passes = 20
 iterations = 400
@@ -156,14 +179,11 @@ from gensim.models import CoherenceModel
 
 '''
 Notes
-- "In practice, corpora may be very large, so loading them into memory may be impossible. Gensim intelligently handles such corpora by streaming them one document at a time. See https://radimrehurek.com/gensim/auto_examples/core/run_corpora_and_vector_spaces.html#corpus-streaming-tutorial for details."
+
 
 - "One of the main properties of the bag-of-words model is that it completely ignores the order of the tokens in the document that is encoded"
-
 - "Depending on how the representation was obtained, two different documents may have the same vector representations."
-
 - "The full power of Gensim comes from the fact that a corpus doesn’t have to be a list, or a NumPy array, or a Pandas dataframe, or whatever. Gensim accepts any object that, when iterated over, successively yields documents."
-
 - document-level X sentence-level topic modeling
 
 See
