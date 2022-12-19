@@ -5,7 +5,7 @@ This file is part of Gomide et al. 2023.
 This project is licensed under the terms of the MIT license.
 """
 
-""" @create_now.py
+""" @create_bow.py
 This script
 - reads plain text files in a give folder
 - applies Spacy Lang model
@@ -16,10 +16,6 @@ and saves:
 - the metadata (tsv)
 
 
-Functions in this file
-    * download_url - it takes an argument: 
-    a string with with url path
-    and returns the content of the url as bytes
 """
 
 # import libraries
