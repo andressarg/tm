@@ -5,8 +5,8 @@ This file is part of Gomide et al. 2023.
 This project is licensed under the terms of the MIT license.
 """
 
-""" @get_gutemberg
-This script download books from the Gutemberg Project (https://www.gutenberg.org/), 
+""" @get_gutemberg.py
+This script downloads books from the Gutemberg Project (https://www.gutenberg.org/), 
 removes unecessary elements (e.g. boilerplates, page numbers),
 extract the metadata for each book
 and saves:
