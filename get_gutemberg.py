@@ -96,16 +96,13 @@ for book_id in book_id_list:
     df.loc[book_id] = [meta_list[0], meta_list[1], meta_list[2], meta_list[3], meta_list[4]]
 
     # write book content to file
-    with open(f"input/plain/{book_id}.txt", 'wb') as file:
+    with open(f"input/{book_id}.txt", 'wb') as file:
         file.write(data_plain)
 
 
 # write metadata to file
 df.to_csv('output/books_metadata.tsv', sep='\t', encoding='utf-8')
     
-
-
-
 
 
 # to get the books from html
@@ -121,11 +118,11 @@ for book_id in book_id_list:
     soup = BeautifulSoup(data_html, 'html.parser')
 
     # get metadata
-    author = soup.find('meta', {'name' : 'AUTHOR'})['content']
-    lang = soup.find('meta', {'name' : 'dc.language'})['content']
-    subj = soup.find('meta', {'name' : 'dc.subject'})['content']
-    title = soup.find('meta', {'property' : 'og:title'})['content']
-    datepub = soup.find('meta', {'name' : 'dcterms.created'})['content']
+    author = soup.find('meta', {'name' : 'AUTHOR'})['content'] if soup.find('meta', {'name' : 'AUTHOR'}) is not None else 'NA'
+    lang = soup.find('meta', {'name' : 'dc.language'})['content'] if soup.find('meta', {'name' : 'dc.language'}) is not None else 'NA'
+    subj = soup.find('meta', {'name' : 'dc.subject'})['content'] if soup.find('meta', {'name' : 'dc.subject'}) is not None else 'NA'
+    title = soup.find('meta', {'property' : 'og:title'})['content'] if soup.find('meta', {'property' : 'og:title'}) is not None else 'NA'
+    datepub = soup.find('meta', {'name' : 'dcterms.created'})['content'] if soup.find('meta', {'name' : 'dcterms.created'}) is not None else 'NA'
 
     ## remove unnecessary elements
     # style
@@ -156,36 +153,13 @@ for book_id in book_id_list:
 
 
     # write to file with tags
-    with open(f'input/{book_id}.html', 'w', encoding = 'utf-8') as file:
+    with open(f'input/html/{book_id}.html', 'w', encoding = 'utf-8') as file:
         file.write(str(soup.prettify()))
     # write to file without tags
-    with open(f'input/{book_id}.txt', 'w', encoding = 'utf-8') as file:
+    with open(f'input/plain/{book_id}.txt', 'w', encoding = 'utf-8') as file:
         file.write(soup.text)
 
 
-
-
-# parse
-soup = BeautifulSoup(data_html, 'html.parser')
-
-# get metadata
-author = soup.find('meta', {'name' : 'AUTHOR'})
-lang = soup.find('meta', {'name' : 'dc.language'})
-subj = soup.find('meta', {'name' : 'dc.subject'})
-title = soup.find('meta', {'property' : 'og:title'})
-datepub = soup.find('meta', {'name' : 'dcterms.created'})
-
-
-for i in [author, lang, subj, title, datepub]:
-    try:
-        i = i['content']
-    except:
-        i = 'NA'
-
-
-
-
-
-with open(f'input/{book_id}.html', 'w', encoding = 'utf-8') as file:
-    file.write(str(soup.prettify()))
+# write metadata to file
+df.to_csv('output/books_metadata.tsv', sep='\t', encoding='utf-8')
 
