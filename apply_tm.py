@@ -18,11 +18,17 @@ and saves:
 # import libraries
 import pandas as pd # for dataframes
 from gensim.corpora.dictionary import Dictionary # to convert bows to dictionary
-from gensim.models import LdaModel # to apply the lda model
+#from gensim.models import LdaModel # to apply the lda model
 import pyLDAvis # for data visualization of the topic model
 import pyLDAvis.gensim_models  
 from pprint import pprint # to print the results in a better way
+import matplotlib.pyplot as plt # for the plots
+from gensim import models
 
+
+'''
+# Read in the data
+'''
 # read in dfs
 df = pd.read_csv('output/bows.tsv',sep = '\t',  index_col=0)
 df_2gram = pd.read_csv('output/bow_with2gram.tsv',sep = '\t',  index_col=0)
@@ -38,12 +44,17 @@ ct_list = df['custom_tok'].apply(eval)
 bi_list = df_2gram['all_tokens'].apply(eval)
 
 
+
+'''
+# Prepare the bag of words
+'''
+
 # TODO put the below in a function? so it's easier to process different results
 
 # map each token to a unique ID (applying the Dictionary Object from Gensim)
 dictionary = Dictionary(bi_list)
 
-# see toknes and ids
+# see tokens and ids
 print(dictionary.token2id)
 
 
@@ -59,11 +70,68 @@ dictionary.filter_extremes(no_below=1, no_above=0.8, keep_n=None)
 
 # make bag of words representation of the documents
 # "doc2bow() simply counts the number of occurrences of each distinct word, converts the word to its integer word id and returns the result as a sparse vector"
-corpus = [dictionary.doc2bow(doc) for doc in ct_list]
+corpus = [dictionary.doc2bow(doc) for doc in bi_list]
+
+# Make an index to word dictionary.
+temp = dictionary[0]  # This is only to "load" the dictionary.
+id2word = dictionary.id2token
+
 
 # see corpus
 print('Number of types: %d' % len(dictionary))
 print('Number of documents: %d' % len(corpus))
+
+'''
+
+# FINDING OPTIMAL NUMBER OF TOPICS
+
+After training the model, we should evaluate it.
+We can use coherence score for that
+
+"The score measures the degree of semantic similarity between high scoring words in each topic." 
+
+"In this fashion, a coherence score can be computed for each iteration by inserting a varying number of topics.
+
+Algorithms to calculate coherence score: C_v, C_p, C_uci, C_umass, C_npmi, C_a, ...
+
+gensim library makes this calculation easier
+
+Coherence score for C_v ranges from 0 (complete incoherence) to 1 (complete coherence).
+> 0.5 = fairly good (Doing Computational Social Science: A Practical Introduction By John McLevey)."
+
+'''
+
+# Calculating the coherence score using C_v and u_mass 
+# we first create an empty list to iterate the number of the max numbers of topics to test
+# and empty lists to store the cv and umass score
+
+topics = []
+score_cv = []
+score_umass = []
+
+for i in range(1,20,1):
+    # lda_model = LdaMulticore(corpus=corpus, id2word=dictionary, iterations=10, num_topics=i, workers = 4, passes=10, random_state=100)
+    print(f'working with {i} topics...')
+    lda_model = models.LdaModel(corpus=corpus, id2word=id2word, iterations=10, num_topics=i, passes=10, random_state=100)
+    print('calculating cv')
+    cv = models.CoherenceModel(model=lda_model, texts = bi_list, corpus=corpus, dictionary=dictionary, coherence='c_v')
+    score_cv.append(cv.get_coherence())
+    print('calculating umass')
+    um = models.CoherenceModel(model=lda_model, corpus=corpus, dictionary=dictionary, coherence='u_mass')
+    score_umass.append(um.get_coherence())
+    topics.append(i)
+
+
+plt.plot(topics, score_cv)
+plt.xlabel('Number of Topics')
+plt.ylabel('Coherence Score')
+plt.show()
+
+
+plt.plot(topics, score_umass)
+plt.xlabel('Number of Topics')
+plt.ylabel('Coherence Score')
+plt.show()
 
 
 
@@ -74,7 +142,7 @@ print('Number of documents: %d' % len(corpus))
 ############
 
 # Set training parameters.
-num_topics = 4
+num_topics = 16
 chunksize = 2000
 passes = 20
 iterations = 400
@@ -84,7 +152,7 @@ eval_every = None  # Don't evaluate model perplexity, takes too much time.
 temp = dictionary[0]  # This is only to "load" the dictionary.
 id2word = dictionary.id2token
 
-lda_model = LdaModel(
+lda_model = models.LdaModel(
     corpus=corpus,
     id2word=id2word,
     chunksize=chunksize,
@@ -117,85 +185,28 @@ pyLDAvis.save_html(lda_display, 'output/lda_vis.html')
 
 
 
-# TODO 
-# FINDING OPTIMAL NUMBER OF TOPICS
+####################à
+# lsi model
+'''
+Latent Semantic Indexing, LSI (or sometimes LSA) transforms documents 
+from either bag-of-words or (preferrably) TfIdf-weighted space 
+into a latent space of a lower dimensionality. 
+
+
+model = models.LsiModel(tfidf_corpus, id2word=dictionary, num_topics=300)
+
 
 '''
-After training the model, we should evaluate it.
-We can use coherence score for that
 
-"The score measures the degree of semantic similarity between high scoring words in each topic." 
-
-In this fashion, a coherence score can be computed for each iteration by inserting a varying number of topics.
-
-Algorithms to calculate coherence score: C_v, C_p, C_uci, C_umass, C_npmi, C_a, ...
-
-gensim library makes this calculation easier
-
-Coherence score for C_v ranges from 0 (complete incoherence) to 1 (complete coherence).
-> 0.5 = fairly good (Doing Computational Social Science: A Practical Introduction By John McLevey).
-
-'''
-import matplotlib.pyplot as plt
-from gensim.models import CoherenceModel
-
-topics = []
-score = []
-
-# calculating c_umass
-for i in range(1,20,1):
-    print(f'working with {i} topics...')
-    lda_model = LdaModel(corpus=corpus, id2word=id2word, iterations=10, num_topics=i, passes=10, random_state=100)
-    # lda_model = LdaMulticore(corpus=corpus, id2word=dictionary, iterations=10, num_topics=i, workers = 4, passes=10, random_state=100)
-    cm = CoherenceModel(model=lda_model, corpus=corpus, dictionary=dictionary, coherence='u_mass')
-    topics.append(i)
-    score.append(cm.get_coherence())
+tfidf = models.TfidfModel(corpus)  # step 1 -- initialize a model
+corpus_tfidf = tfidf[corpus]
 
 
-plt.plot(topics, score)
-plt.xlabel('Number of Topics')
-plt.ylabel('Coherence Score')
-plt.show()
+lsi_model = models.LsiModel(corpus, id2word=dictionary, num_topics=2)
+pprint(lsi_model.print_topics())
 
-# Calculating the coherence score using C_v:
-topics = []
-score_cv = []
-score_umass = []
-
-for i in range(1,20,1):
-    # lda_model = LdaMulticore(corpus=corpus, id2word=dictionary, iterations=10, num_topics=i, workers = 4, passes=10, random_state=100)
-    print(f'working with {i} topics...')
-    lda_model = LdaModel(corpus=corpus, id2word=id2word, iterations=10, num_topics=i, passes=10, random_state=100)
-    print('calculating cv')
-    cv = CoherenceModel(model=lda_model, texts = bi_list, corpus=corpus, dictionary=dictionary, coherence='c_v')
-    score_cv.append(cv.get_coherence())
-    print('calculating umass')
-    um = CoherenceModel(model=lda_model, corpus=corpus, dictionary=dictionary, coherence='u_mass')
-    score_umass.append(um.get_coherence())
-    topics.append(i)
-
-
-plt.plot(topics, score_cv)
-plt.xlabel('Number of Topics')
-plt.ylabel('Coherence Score')
-plt.show()
-
-
-plt.plot(topics, score_umass)
-plt.xlabel('Number of Topics')
-plt.ylabel('Coherence Score')
-plt.show()
-
-
-
-
-bi_list
-lda_model = LdaModel(corpus=corpus, id2word=id2word, iterations=10, num_topics=5, passes=10, random_state=100)
-
-
-
-
-
+lsi_model = models.LsiModel(corpus_tfidf, id2word=dictionary, num_topics=2)
+pprint(lsi_model.print_topics())
 
 
 
