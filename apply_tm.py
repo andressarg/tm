@@ -67,26 +67,6 @@ print('Number of documents: %d' % len(corpus))
 
 
 
-# TODO 
-# FINDING OPTIMAL NUMBER OF TOPICS
-
-'''
-After training the model, we should evaluate it.
-We can use coherence score for that
-
-"The score measures the degree of semantic similarity between high scoring words in each topic." 
-
-In this fashion, a coherence score can be computed for each iteration by inserting a varying number of topics.
-
-Algorithms to calculate coherence score: C_v, C_p, C_uci, C_umass, C_npmi, C_a, ...
-
-gensim library makes this calculation easier
-
-Coherence score for C_v ranges from 0 (complete incoherence) to 1 (complete coherence).
-> 0.5 = fairly good (Doing Computational Social Science: A Practical Introduction By John McLevey).
-
-'''
-
 
 
 ############
@@ -137,12 +117,80 @@ pyLDAvis.save_html(lda_display, 'output/lda_vis.html')
 
 
 
+# TODO 
+# FINDING OPTIMAL NUMBER OF TOPICS
+
+'''
+After training the model, we should evaluate it.
+We can use coherence score for that
+
+"The score measures the degree of semantic similarity between high scoring words in each topic." 
+
+In this fashion, a coherence score can be computed for each iteration by inserting a varying number of topics.
+
+Algorithms to calculate coherence score: C_v, C_p, C_uci, C_umass, C_npmi, C_a, ...
+
+gensim library makes this calculation easier
+
+Coherence score for C_v ranges from 0 (complete incoherence) to 1 (complete coherence).
+> 0.5 = fairly good (Doing Computational Social Science: A Practical Introduction By John McLevey).
+
+'''
+import matplotlib.pyplot as plt
+from gensim.models import CoherenceModel
+
+topics = []
+score = []
+
+# calculating c_umass
+for i in range(1,20,1):
+    print(f'working with {i} topics...')
+    lda_model = LdaModel(corpus=corpus, id2word=id2word, iterations=10, num_topics=i, passes=10, random_state=100)
+    # lda_model = LdaMulticore(corpus=corpus, id2word=dictionary, iterations=10, num_topics=i, workers = 4, passes=10, random_state=100)
+    cm = CoherenceModel(model=lda_model, corpus=corpus, dictionary=dictionary, coherence='u_mass')
+    topics.append(i)
+    score.append(cm.get_coherence())
+
+
+plt.plot(topics, score)
+plt.xlabel('Number of Topics')
+plt.ylabel('Coherence Score')
+plt.show()
+
+# Calculating the coherence score using C_v:
+topics = []
+score_cv = []
+score_umass = []
+
+for i in range(1,20,1):
+    # lda_model = LdaMulticore(corpus=corpus, id2word=dictionary, iterations=10, num_topics=i, workers = 4, passes=10, random_state=100)
+    print(f'working with {i} topics...')
+    lda_model = LdaModel(corpus=corpus, id2word=id2word, iterations=10, num_topics=i, passes=10, random_state=100)
+    print('calculating cv')
+    cv = CoherenceModel(model=lda_model, texts = bi_list, corpus=corpus, dictionary=dictionary, coherence='c_v')
+    score_cv.append(cv.get_coherence())
+    print('calculating umass')
+    um = CoherenceModel(model=lda_model, corpus=corpus, dictionary=dictionary, coherence='u_mass')
+    score_umass.append(um.get_coherence())
+    topics.append(i)
+
+
+plt.plot(topics, score_cv)
+plt.xlabel('Number of Topics')
+plt.ylabel('Coherence Score')
+plt.show()
+
+
+plt.plot(topics, score_umass)
+plt.xlabel('Number of Topics')
+plt.ylabel('Coherence Score')
+plt.show()
 
 
 
 
-
-
+bi_list
+lda_model = LdaModel(corpus=corpus, id2word=id2word, iterations=10, num_topics=5, passes=10, random_state=100)
 
 
 
