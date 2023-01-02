@@ -69,7 +69,7 @@ dictionary.filter_extremes(no_below=1, no_above=0.8, keep_n=None)
 
 
 # make bag of words representation of the documents
-# "doc2bow() simply counts the number of occurrences of each distinct word, converts the word to its integer word id and returns the result as a sparse vector"
+# doc2bow() gets the count for all types, gets the integer for each type and returns the space vector
 corpus = [dictionary.doc2bow(doc) for doc in bi_list]
 
 # Make an index to word dictionary.
@@ -77,7 +77,7 @@ temp = dictionary[0]  # This is only to "load" the dictionary.
 id2word = dictionary.id2token
 
 
-# see corpus
+# see corpus information
 print('Number of types: %d' % len(dictionary))
 print('Number of documents: %d' % len(corpus))
 
@@ -85,19 +85,18 @@ print('Number of documents: %d' % len(corpus))
 
 # FINDING OPTIMAL NUMBER OF TOPICS
 
-After training the model, we should evaluate it.
-We can use coherence score for that
-
-"The score measures the degree of semantic similarity between high scoring words in each topic." 
-
-"In this fashion, a coherence score can be computed for each iteration by inserting a varying number of topics.
-
-Algorithms to calculate coherence score: C_v, C_p, C_uci, C_umass, C_npmi, C_a, ...
-
-gensim library makes this calculation easier
+There is not a rule of the right number of topics when applying a model. 
+One way of finding a reasonable number of topics is to train the model with different numbers of topics and then evaluating the results.
+For this evaluation, we use coherence score measures.
+These scores measure "the degree of semantic similarity between high scoring words in each topic." 
+Some common algorithms to calculate coherence score are C_v, C_p, C_uci, C_umass, C_npmi, C_a.
+(see http://svn.aksw.org/papers/2015/WSDM_Topic_Evaluation/public.pdf)
+Here we will use cv and umass.
 
 Coherence score for C_v ranges from 0 (complete incoherence) to 1 (complete coherence).
-> 0.5 = fairly good (Doing Computational Social Science: A Practical Introduction By John McLevey)."
+> 0.5 = fairly good (Doing Computational Social Science: A Practical Introduction By John McLevey)
+
+As LDA is the most frequently used model, we will use this model to train the data and define the number of topics.
 
 '''
 
@@ -110,37 +109,42 @@ score_cv = []
 score_umass = []
 
 for i in range(1,20,1):
+# for i in range(1,20,1):
     # lda_model = LdaMulticore(corpus=corpus, id2word=dictionary, iterations=10, num_topics=i, workers = 4, passes=10, random_state=100)
     print(f'working with {i} topics...')
     lda_model = models.LdaModel(corpus=corpus, id2word=id2word, iterations=10, num_topics=i, passes=10, random_state=100)
     print('calculating cv')
-    cv = models.CoherenceModel(model=lda_model, texts = bi_list, corpus=corpus, dictionary=dictionary, coherence='c_v')
+    cv = models.CoherenceModel(model = lda_model, texts = bi_list, corpus = corpus, dictionary = dictionary, coherence='c_v')
     score_cv.append(cv.get_coherence())
     print('calculating umass')
-    um = models.CoherenceModel(model=lda_model, corpus=corpus, dictionary=dictionary, coherence='u_mass')
+    um = models.CoherenceModel(model = lda_model, texts = bi_list, corpus = corpus, dictionary = dictionary, coherence='u_mass')
     score_umass.append(um.get_coherence())
     topics.append(i)
 
 
+# see the plot for cv
 plt.plot(topics, score_cv)
 plt.xlabel('Number of Topics')
-plt.ylabel('Coherence Score')
+plt.ylabel('Coherence Score - CV')
 plt.show()
 
 
+# see the plot for umass
+# values closer to 0 are better
 plt.plot(topics, score_umass)
 plt.xlabel('Number of Topics')
-plt.ylabel('Coherence Score')
+plt.ylabel('Coherence Score - UMASS')
 plt.show()
 
 
 
 
+'''
+Once and optimal number of topics is defined, we can then see the topics
+Here we apply the model again with better parameters (more iterations )
+'''
 
-############
-# LdaModel #
-############
-
+# LdaModel 
 # Set training parameters.
 num_topics = 16
 chunksize = 2000
@@ -148,15 +152,13 @@ passes = 20
 iterations = 400
 eval_every = None  # Don't evaluate model perplexity, takes too much time.
 
-# Make an index to word dictionary.
-temp = dictionary[0]  # This is only to "load" the dictionary.
-id2word = dictionary.id2token
 
 lda_model = models.LdaModel(
     corpus=corpus,
     id2word=id2word,
     chunksize=chunksize,
-    # We set alpha = 'auto' and eta = 'auto'. Again this is somewhat technical, but essentially we are automatically learning two parameters in the model that we usually would have to specify explicitly.
+    # We set alpha = 'auto' and eta = 'auto'
+    # essentially we are automatically learning two parameters in the model that we usually would have to specify explicitly.
     alpha='auto',
     eta='auto',
     iterations=iterations,
@@ -185,72 +187,27 @@ pyLDAvis.save_html(lda_display, 'output/lda_vis.html')
 
 
 
-####################à
+
 # lsi model
 '''
 Latent Semantic Indexing, LSI (or sometimes LSA) transforms documents 
 from either bag-of-words or (preferrably) TfIdf-weighted space 
 into a latent space of a lower dimensionality. 
-
-
-model = models.LsiModel(tfidf_corpus, id2word=dictionary, num_topics=300)
-
-
 '''
 
-tfidf = models.TfidfModel(corpus)  # step 1 -- initialize a model
+# initialize a model
+tfidf = models.TfidfModel(corpus)  
 corpus_tfidf = tfidf[corpus]
 
+# then we apply the model
+lsi_model_bow = models.LsiModel(corpus, id2word=dictionary, num_topics=2)
+pprint(lsi_model_bow.print_topics())
 
-lsi_model = models.LsiModel(corpus, id2word=dictionary, num_topics=2)
-pprint(lsi_model.print_topics())
-
-lsi_model = models.LsiModel(corpus_tfidf, id2word=dictionary, num_topics=2)
-pprint(lsi_model.print_topics())
-
-
+lsi_model_tfidf = models.LsiModel(corpus_tfidf, id2word=dictionary, num_topics=4)
+pprint(lsi_model_tfidf.print_topics())
 
 
 
-
-
-
-
-
-###############
-# lda multicore comeca 
-# ? qual a diferenca
-
-lda_model = LdaMulticore(corpus=corpus, id2word=dictionary, iterations=50, num_topics=5, workers = 4, passes=10)
-'''
-"As input, I give the model our corpus and dictionary from before; 
-besides, I choose to iterate over the corpus 50 times to optimize the model parameters (this is the default value). 
-I select the number of topics to be ten and the workers to be 4 (find the number of cores on your PC by pressing the ctr+shift+esc keys). 
-The pass is 10, which means the model will pass through the corpus ten times during training."
-'''
-pprint(lda_model.print_topics())
-lda_display = pyLDAvis.gensim_models.prepare(lda_model, corpus, dictionary)
-# pyLDAvis.enable_notebook()
-pyLDAvis.display(lda_display)
-pyLDAvis.save_html(lda_display, 'index.html')
-
-# lda multicore termina
-###############
-
-
-
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-sns.set()
-import spacy
-from imp import reload # pode ser necesario
-import pyLDAvis.gensim_models
-pyLDAvis.enable_notebook()# Visualise inside a notebook
-import en_core_web_sm
-from gensim.corpora.dictionary import Dictionary
-from gensim.models import LdaMulticore
-from gensim.models import CoherenceModel
 
 
 
@@ -270,4 +227,6 @@ See
 - https://radimrehurek.com/gensim/#
 - https://radimrehurek.com/gensim/auto_examples/tutorials/run_lda.html#sphx-glr-auto-examples-tutorials-run-lda-py
 - https://neptune.ai/blog/pyldavis-topic-modelling-exploration-tool-that-every-nlp-data-scientist-should-know
+- https://towardsdatascience.com/understanding-topic-coherence-measures-4aa41339634c
+- https://www.baeldung.com/cs/topic-modeling-coherence-score 
 '''

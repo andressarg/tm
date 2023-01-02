@@ -50,8 +50,25 @@ def download_url(urlpath):
 # book_id = "44540" # cinco minutos j de alencar
 # book_id = "55682" # quincas borba machado
 # book_id = "31971" # o crime do padre amaro eca de queiros
+# book_id_list = ["44540", "55682", "31971"]
 
-book_id_list = ["44540", "55682", "31971"]
+'''
+54829   Memorias Posthumas de Braz Cubas
+55682   Quincas Borba
+55752   Dom Casmurro
+55797   Memorial de Ayres
+56737   Esau e Jacob
+57001   Papeis Avulsos
+67935   Reliquias de Casa Velha
+33056   Historias Sem Data
+53101   A Mao e A Luva
+67162   Helena
+67780   Yayá Garcia
+61653   Poesias Completas
+'''
+
+
+book_id_list = ["54829", "55682", "55752", "55797", "56737", "57001", "67935", "33056", "53101", "67162", "67780", "61653"]
 
 
 '''

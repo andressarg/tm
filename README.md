@@ -34,7 +34,9 @@
 -----
 ## 3. Applying TM 
 @apply_tm.py
-- why Gensim (small for research on personal computers): "In practice, corpora may be very large, so loading them into memory may be impossible. Gensim intelligently handles such corpora by streaming them one document at a time. See https://radimrehurek.com/gensim/auto_examples/core/run_corpora_and_vector_spaces.html#corpus-streaming-tutorial for details." 
+- why Gensim 
+    - (small for research on personal computers): "In practice, corpora may be very large, so loading them into memory may be impossible. Gensim intelligently handles such corpora by streaming them one document at a time. See https://radimrehurek.com/gensim/auto_examples/core/run_corpora_and_vector_spaces.html#corpus-streaming-tutorial for details." 
+    - Gensim library makes the calculation of coherence score easier
 
 
 -----
