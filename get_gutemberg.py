@@ -24,8 +24,26 @@ Functions in this file
 # import libraries
 import re # for regular expressions
 from urllib.request import urlopen # to request the content from the internet
+from urllib.error import HTTPError # to raise errors when connecting to the sites
 from bs4 import BeautifulSoup # to work with html files (bs4 is known to be user friendly)
 import pandas as pd # to store metadata as dataframe
+
+# def download_url(urlpath):
+#     ''' 
+#     download content from an url address
+#     Args: 
+#         urlpath (str): the url path
+#     Returns:
+#         connection.read() (bytes): the content of the page 
+#     '''
+#     try:
+#         # open a connection to the server
+#         with urlopen(urlpath, timeout=3) as connection:
+#             # return content of the url read as bytes
+#             return connection.read()
+#     except:
+#         # return None
+#         print(f"There was an issue when trying to download{urlpath}")
 
 def download_url(urlpath):
     ''' 
@@ -35,15 +53,10 @@ def download_url(urlpath):
     Returns:
         connection.read() (bytes): the content of the page 
     '''
-    try:
-        # open a connection to the server
-        with urlopen(urlpath, timeout=3) as connection:
-            # return content of the url read as bytes
-            return connection.read()
-    except:
-        # return None
-        print(f"There was an issue when trying to download{urlpath}")
-
+    # open a connection to the server
+    with urlopen(urlpath, timeout=3) as connection:
+        # return content of the url read as bytes
+        return connection.read()
 
 # create a list with the books id
 
@@ -84,14 +97,31 @@ book_id_list = ["54829", "55682", "55752", "55797", "56737", "57001", "67935", "
 df = pd.DataFrame(columns = ['author', 'title', 'lang', 'subj', 'datepub'])
 
 for book_id in book_id_list:
-    # url for plain text book
-    url_plain = f'https://www.gutenberg.org/cache/epub/{book_id}/pg{book_id}.txt'
+    # # url for plain text book
+    # url_plain = f'https://www.gutenberg.org/cache/epub/{book_id}/pg{book_id}.txt'
 
-    # download the content
-    data_plain = download_url(url_plain)
+    # # download the content
+    # print(f'downloading content for {book_id}...')
+    # data_plain = download_url(url_plain)
+
+    # getting the content
+    try:
+        connection = urlopen(f'https://www.gutenberg.org/cache/epub/{book_id}/pg{book_id}.txt')
+        data_plain = connection.read()
+        print(f'downloading data for {book_id}, from link 1')
+    except HTTPError as err:
+        if err.code == 404: # not found error (link doesnt exist)
+            connection = urlopen(f'https://www.gutenberg.org/files/{book_id}/{book_id}-0.txt')
+            data_plain = connection.read()
+            print(f'downloading data for {book_id}, from link 2')
+        else:
+            print(f'error {err.code} when downloading file {book_id}')
+            continue
 
     # plain text link doesnt include metadata. 
     # we have to go to the previous page
+    # TODO add try exept to metadata 
+    # if it doesnt exist, add NA to the respective row
     url_meta = f'https://www.gutenberg.org/ebooks/{book_id}'
     metadata = download_url(url_meta)
 
@@ -120,7 +150,100 @@ for book_id in book_id_list:
 # write metadata to file
 df.to_csv('output/books_metadata.tsv', sep='\t', encoding='utf-8')
     
+###############à
+# teste comeca
+book_id = '55797'
+url_plain = f'https://www.gutenberg.org/cache/epub/{book_id}/pg{book_id}.txt'
+# TODO add an try excep here
+url_plain = f'https://www.gutenberg.org/files/{book_id}/{book_id}-0.txt'
+data_plain = download_url(url_plain)
 
+
+
+def download_url(urlpath):
+    with urlopen(urlpath, timeout=3) as connection:
+        # return content of the url read as bytes
+        return connection.read()
+
+
+a = download_url(f'https://www.gutenberg.org/cache/epub/{book_id}/pg{book_id}.txt')
+
+
+
+
+
+from urllib.error import HTTPError
+
+
+
+
+try:
+    a = urlopen(f'https://www.gutenberg.org/cache/epub/{book_id}/pg{book_id}.txt')
+    b = a.read()
+    print('first')
+except HTTPError as err:
+    if err.code == 404: # not found error (link doesnt exist)
+        a = urlopen(f'https://www.gutenberg.org/files/{book_id}/{book_id}-0.txt')
+        b = a.read()
+        print('second')
+    else:
+        print(f'error {err.code} when downloading file')
+
+
+
+
+
+for book_id in book_id_list:
+
+    # getting the content
+    try:
+        connection = urlopen(f'https://www.gutenberg.org/cache/epub/{book_id}/pg{book_id}.txt')
+        data_plain = connection.read()
+        print(f'downloading data for {book_id}, from link 1')
+    except HTTPError as err:
+        if err.code == 404: # not found error (link doesnt exist)
+            connection = urlopen(f'https://www.gutenberg.org/files/{book_id}/{book_id}-0.txt')
+            data_plain = connection.read()
+            print(f'downloading data for {book_id}, from link 2')
+        else:
+            print(f'error {err.code} when downloading file {book_id}')
+            continue
+
+    
+    # plain text link doesnt include metadata. 
+    # we have to go to the previous page
+    url_meta = f'https://www.gutenberg.org/ebooks/{book_id}'
+    metadata = download_url(url_meta)
+
+    # parse document 
+    soup = BeautifulSoup(metadata, 'html.parser')
+
+    # get metadata
+    author = soup.find('a', {'about': re.compile(r'\/authors\/.*')}).text
+    lang = soup.find('a', {'href': re.compile(r'\/browse\/languages\/.*')}).text
+    subj = soup.find('a', {'href': re.compile(r'\/ebooks\/subject\/*')}).text
+    title = soup.find('td', {'itemprop': 'headline'}).text
+    datepub = soup.find('td', {'itemprop': 'datePublished'}).text
+
+    # remove line breaks
+    meta_list = [sub.replace('\n', '') for sub in [author, title, lang, subj, datepub]]
+
+
+    # df.loc[book_id] = [book_id, meta_list[0], meta_list[1], meta_list[2], meta_list[3], meta_list[4]]
+    df.loc[book_id] = [meta_list[0], meta_list[1], meta_list[2], meta_list[3], meta_list[4]]
+
+    # write book content to file
+    with open(f"input/{book_id}.txt", 'wb') as file:
+        file.write(data_plain)
+
+df
+
+# https://www.gutenberg.org/cache/epub/54829/pg54829.txt
+# https://www.gutenberg.org/files/54829/54829-0.txt
+# https://www.gutenberg.org/files/55797/55797-0.txt
+
+# teste termina
+###########àà####
 
 # to get the books from html
 # create empty df to store the metadata
