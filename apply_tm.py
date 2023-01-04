@@ -134,8 +134,9 @@ plt.show()
 plt.plot(topics, score_umass)
 plt.xlabel('Number of Topics')
 plt.ylabel('Coherence Score - UMASS')
+plt.xticks(topics)
 plt.show()
-
+plt.savefig('example.png')
 
 
 
@@ -184,6 +185,7 @@ lda_display = pyLDAvis.gensim_models.prepare(lda_model, corpus, dictionary)
 # pyLDAvis.enable_notebook()
 # pyLDAvis.display(lda_display)
 pyLDAvis.save_html(lda_display, 'output/lda_vis.html')
+
 
 
 
