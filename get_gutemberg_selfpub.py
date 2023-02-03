@@ -23,13 +23,9 @@ import pandas as pd # to store metadata as dataframe
 
 
 
-
-"http://self.gutenberg.org/results.aspx?PageIndex=1&SearchEverything=&SearchTitle=&SearchAuthor=&SearchSubject=&SearchPublisher=&SearchHistoricDateStart=&SearchHistoricDateEnd=&LanguageDropDownValue=Portuguese&SearchFileType=&SearchCollection=Authors%20Community&SearchAcademicCollection=&EverythingType=0&TitleType=0&AuthorType=0&SubjectType=0&PublisherType=0&BrowseCatalogId=&ParentBrowseValueId=&trail="
-
-n = 2
-val = f"http://self.gutenberg.org/Results.aspx?PageIndex={n}&SearchCollection=Authors+Community&EverythingType=0&TitleType=0&AuthorType=0&SubjectType=0&PublisherType=0&LanguageDropDownValue=Portuguese&DisplayMode=List"
-
-
+'''
+Para baixar conteúdos de um site, usamos a funcao abaixo
+'''
 
 def download_url(urlpath):
     ''' 
@@ -49,17 +45,94 @@ def download_url(urlpath):
         print(f"There was an issue when trying to download{urlpath}")
 
 
+
+
+'''
+Para descobrir o que precisamos baixar do site,
+realizei a busca manualmente em http://self.gutenberg.org/Home,
+selecionando apenas livros em portugues.
+
+A busca retornou 4 páginas de resultados.
+O link para a página 1 é:
+"http://self.gutenberg.org/Results.aspx?PageIndex=1&SearchCollection=Authors+Community&EverythingType=0&TitleType=0&AuthorType=0&SubjectType=0&PublisherType=0&LanguageDropDownValue=Portuguese&DisplayMode=List"
+
+Para chegar nas outras páginas, basta alterar o número após PageIndex= para o número desejado
+
+Precisamos salvar também os metadados desejados
+
+textTitle
+textAuthor
+textPublisher
+textId
+textFormatType
+textSubject
+textCollections
+textAbstracts
+
+'''
+
+# criar uma DF para salvar os metadados
+
+df = pd.DataFrame(columns = ['bookid', 'title', 'author', 'lang', 'publisher', 'orgFormat', 'subj', 'collection', 'link'])
+
+
+pages = [1, 2, 3, 4]
+
+for n in pages:
+    val = f"http://self.gutenberg.org/Results.aspx?PageIndex={n}&SearchCollection=Authors+Community&EverythingType=0&TitleType=0&AuthorType=0&SubjectType=0&PublisherType=0&LanguageDropDownValue=Portuguese&DisplayMode=List"
+    
+
+n = 2
+val = f"http://self.gutenberg.org/Results.aspx?PageIndex={n}&SearchCollection=Authors+Community&EverythingType=0&TitleType=0&AuthorType=0&SubjectType=0&PublisherType=0&LanguageDropDownValue=Portuguese&DisplayMode=List"
+
+
+
+
 page2 = download_url(val)
 
 soup = BeautifulSoup(page2, 'html.parser')
 
 # get metadata
-# author = soup.find('a', {'about': re.compile(r'\/authors\/.*')}).text
-# lang = soup.find('a', {'href': re.compile(r'\/browse\/languages\/.*')}).text
-# subj = soup.find('a', {'href': re.compile(r'\/ebooks\/subject\/*')}).text
-# title = soup.find('td', {'itemprop': 'headline'}).text
 
+
+bookid = soup.find('div', {'class': 'textId'}).text
 title = soup.find('div', {'class': 'textTitle'}).text
+author = soup.find('div', {'class': 'textAuthor'}).text
+publisher = soup.find('div', {'class': 'textPublisher'}).text # tem dois
+srcformat = soup.find('div', {'class': 'textFormatType'}).text
+subject = soup.find('div', {'class': 'textSubject'}).text
+collections = soup.find('div', {'class': 'textCollections'}).text
+bookpage = soup.find('div', {'class': 'textAbstracts'}).a.attrs['href']
+
+
+
+bookids    = soup.findAll('div', {'class': 'textId'})
+titles     = soup.findAll('div', {'class': 'textTitle'})
+authors    = soup.findAll('div', {'class': 'textAuthor'})
+publishers = soup.findAll('div', {'class': 'textPublisher'}) # tem dois
+srcformats = soup.findAll('div', {'class': 'textFormatType'})
+subjects   = soup.findAll('div', {'class': 'textSubject'})
+collects   = soup.findAll('div', {'class': 'textCollections'})
+# bookpages  = soup.findAll('div', {'class': 'textAbstracts'}).a.attrs['href']
+
+
+soup.findAll('div', {'class': 'textId'}).a.attrs['href']
+
+titles = soup.findAll('div', {'class': 'textTitle'})
+publishers = soup.findAll('div', {'class': 'textPublisher'})
+
+
+len(titles)
+len(publishers)
+
+
+
+count = 1
+for i in titles:
+    print(count)
+    print(i.text)
+    count += 1
+
 
 
 
