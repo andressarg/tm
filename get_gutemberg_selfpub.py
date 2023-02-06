@@ -117,24 +117,28 @@ collects   = soup.findAll('div', {'class': 'textCollections'})
 
 
 df = pd.DataFrame(columns = ['bookid', 'title', 'author', 'lang', 'publisher', 'orgFormat', 'subj', 'collection', 'link'])
-# TODO remove 'Book Id: ' from bookid
-# TODO add link properly
+
 
 # para cada livro identificado
 for i in range(len(bookids)):
     # criar uma lista com os metadados desejados
     # bookid, title, author, lang, publisher, orgFormat, subj, collection, link
-    lista = [bookids[i].text, titles[i].text, authors[i].text, publishers[i*2].text, publishers[i*2 +1].text, srcformats[i].text, subjects[i].text, collects[i].text, 'link']
+    lista = [bookids[i].text, titles[i].text, authors[i].text, publishers[i*2].text, publishers[i*2 +1].text, srcformats[i].text, subjects[i].text, collects[i].text, bookids[i].a.attrs['href']]
+    
     # remove line breaks, tabs and carriage returns
     lista = [sub.replace('\n', '') for sub in lista]
     lista = [sub.replace('\t', '') for sub in lista]
     lista = [sub.replace('\r', '') for sub in lista]
-    df.loc[len(df)] = lista
 
+    # remove 'Book Id: ' from bookid
+    lista[0] = lista[0][9:]
+
+    df.loc[len(df)] = lista
 
 
 df.to_csv('output/self_pub.tsv', sep='\t', encoding='utf-8')
 
+bookids[0].a.attrs['href']
 
 count = 1
 for i in publishers:
@@ -143,9 +147,6 @@ for i in publishers:
     count += 1
 
 
-len(publishers)
-
-publishers[0]
 
 
 
