@@ -47,6 +47,37 @@ def download_url(urlpath):
 
 
 
+import requests
+import os
+def download_pdf_file(url):
+    """Download PDF from given URL to local directory.
+
+    :param url: The url of the PDF file to be downloaded
+    :return: True if PDF file was successfully downloaded, otherwise False.
+    """
+
+    # Request URL and get response object
+    response = requests.get(url, stream=True)
+
+    # isolate PDF filename from URL
+    pdf_file_name = os.path.basename(url)
+    if response.status_code == 200:
+        # Save in current working directory
+        filepath = os.path.join(os.getcwd() + '/input', pdf_file_name)
+        with open(filepath, 'wb') as pdf_object:
+            pdf_object.write(response.content)
+            print(f'{pdf_file_name} was successfully saved!')
+            return True
+    else:
+        print(f'Uh oh! Could not download {pdf_file_name},')
+        print(f'HTTP response status code: {response.status_code}')
+        return False
+
+
+
+
+
+
 '''
 Para descobrir o que precisamos baixar do site,
 realizei a busca manualmente em http://self.gutenberg.org/Home,
@@ -74,15 +105,107 @@ textAbstracts
 # criar uma DF para salvar os metadados
 df = pd.DataFrame(columns = ['bookid', 'title', 'author', 'lang', 'publisher', 'orgFormat', 'subj', 'collection', 'link'])
 
-# ir pagina por pagina
+# estabelecer o numero de paginas
 pages = [1, 2, 3, 4]
 
+# ir pagina por pagina
 for n in pages:
     val = f"http://self.gutenberg.org/Results.aspx?PageIndex={n}&SearchCollection=Authors+Community&EverythingType=0&TitleType=0&AuthorType=0&SubjectType=0&PublisherType=0&LanguageDropDownValue=Portuguese&DisplayMode=List"
-    
+
+    # baixar pagina
+    page = download_url(val)
+    print(f'getting page {n}')
+
+    # html parser 
+    soup = BeautifulSoup(page, 'html.parser')
+
+    # pegar os metadados
+    bookids    = soup.findAll('div', {'class': 'textId'})
+    titles     = soup.findAll('div', {'class': 'textTitle'})
+    authors    = soup.findAll('div', {'class': 'textAuthor'})
+    publishers = soup.findAll('div', {'class': 'textPublisher'}) # tem dois
+    srcformats = soup.findAll('div', {'class': 'textFormatType'})
+    subjects   = soup.findAll('div', {'class': 'textSubject'})
+    collects   = soup.findAll('div', {'class': 'textCollections'})
+
+    # para cada livro identificado
+    for i in range(len(bookids)):
+        print(f'getting book {i+1} in page {n}')
+        # criar uma lista com os metadados desejados
+        # bookid, title, author, lang, publisher, orgFormat, subj, collection, link
+        meta_list = [bookids[i].text, titles[i].text, authors[i].text, publishers[i*2].text, publishers[i*2 +1].text, srcformats[i].text, subjects[i].text, collects[i].text, bookids[i].a.attrs['href']]
+        
+        # remove line breaks, tabs and carriage returns
+        meta_list = [sub.replace('\n', '') for sub in meta_list]
+        meta_list = [sub.replace('\t', '') for sub in meta_list]
+        meta_list = [sub.replace('\r', '') for sub in meta_list]
+
+        # remove 'Book Id: ' from bookid
+        meta_list[0] = meta_list[0][9:]
+
+        # add list to DF
+        df.loc[len(df)] = meta_list
+
+
+df.to_csv('output/self_pub.tsv', sep='\t', encoding='utf-8')
+
+
+# pegar o link de download do livro
+for l in df['link']:
+    print(l)
+
+    # formar o link
+    # page_link = 'http://self.gutenberg.org/eBooks' + df['link'][0]
+    page_link = 'http://self.gutenberg.org/eBooks' + l
+
+    # baixar conteudo
+    page_book = download_url(page_link)
+
+    # BS parser
+    page_soup = BeautifulSoup(page_book, 'html.parser')
+
+    # encontrar link para o pdf
+    pdf_link1 = page_soup.find('iframe', {'id': 'bookViewer'}).attrs['src']
+    pdf_link2 = re.search(r'.*file=\/uploads/pdf/(.*)', pdf_link1)[1]
+    pdf_link3 = f'http://uploads.worldlibrary.net/uploads/pdf/{pdf_link2}'
+
+    # baixar pdf
+    download_pdf_file(pdf_link3)
+
+
+'''
+http://uploads.worldlibrary.net/uploads/pdf/20121014234847o_caminho_da_verdade_pdf.pdf
+http://Uploads.WorldLibrary.org/uploads/userfiles/20121014235904o_caminho_da_verdade_jpg.jpg
+'''
+
+
+download_url("http://self.gutenberg.org/eBooks/eBooks/WPLBN0003468721-O-Mago-de-Camelot--A-saga-de-Merlin-para-coroar-um-drag-o-by-Hip-lito-Marcelo.aspx?&Words=")
+
+from urllib.error import HTTPError
 
 
 
+
+# getting the content
+try:
+    connection = urlopen("http://self.gutenberg.org/eBooks/eBooks/WPLBN0003468721-O-Mago-de-Camelot--A-saga-de-Merlin-para-coroar-um-drag-o-by-Hip-lito-Marcelo.aspx?&Words=")
+    data_plain = connection.read()
+    print(f'downloading ')
+except HTTPError as err:
+    print(err.code)
+
+
+page_soup = BeautifulSoup(data_plain, 'html.parser')
+
+
+
+
+
+
+
+
+
+######################àà
 # teste
 val = f"http://self.gutenberg.org/Results.aspx?PageIndex=2&SearchCollection=Authors+Community&EverythingType=0&TitleType=0&AuthorType=0&SubjectType=0&PublisherType=0&LanguageDropDownValue=Portuguese&DisplayMode=List"
 
@@ -116,7 +239,7 @@ collects   = soup.findAll('div', {'class': 'textCollections'})
 
 
 
-df = pd.DataFrame(columns = ['bookid', 'title', 'author', 'lang', 'publisher', 'orgFormat', 'subj', 'collection', 'link'])
+# df = pd.DataFrame(columns = ['bookid', 'title', 'author', 'lang', 'publisher', 'orgFormat', 'subj', 'collection', 'link'])
 
 
 # para cada livro identificado
