@@ -72,38 +72,36 @@ textAbstracts
 '''
 
 # criar uma DF para salvar os metadados
-
 df = pd.DataFrame(columns = ['bookid', 'title', 'author', 'lang', 'publisher', 'orgFormat', 'subj', 'collection', 'link'])
 
-
+# ir pagina por pagina
 pages = [1, 2, 3, 4]
 
 for n in pages:
     val = f"http://self.gutenberg.org/Results.aspx?PageIndex={n}&SearchCollection=Authors+Community&EverythingType=0&TitleType=0&AuthorType=0&SubjectType=0&PublisherType=0&LanguageDropDownValue=Portuguese&DisplayMode=List"
     
 
-n = 2
-val = f"http://self.gutenberg.org/Results.aspx?PageIndex={n}&SearchCollection=Authors+Community&EverythingType=0&TitleType=0&AuthorType=0&SubjectType=0&PublisherType=0&LanguageDropDownValue=Portuguese&DisplayMode=List"
 
 
+# teste
+val = f"http://self.gutenberg.org/Results.aspx?PageIndex=2&SearchCollection=Authors+Community&EverythingType=0&TitleType=0&AuthorType=0&SubjectType=0&PublisherType=0&LanguageDropDownValue=Portuguese&DisplayMode=List"
 
-
+# baixar pagina
 page2 = download_url(val)
 
+# parser 
 soup = BeautifulSoup(page2, 'html.parser')
 
 # get metadata
 
-
-bookid = soup.find('div', {'class': 'textId'}).text
-title = soup.find('div', {'class': 'textTitle'}).text
-author = soup.find('div', {'class': 'textAuthor'}).text
-publisher = soup.find('div', {'class': 'textPublisher'}).text # tem dois
-srcformat = soup.find('div', {'class': 'textFormatType'}).text
-subject = soup.find('div', {'class': 'textSubject'}).text
-collections = soup.find('div', {'class': 'textCollections'}).text
-bookpage = soup.find('div', {'class': 'textAbstracts'}).a.attrs['href']
-
+# bookid = soup.find('div', {'class': 'textId'}).text
+# title = soup.find('div', {'class': 'textTitle'}).text
+# author = soup.find('div', {'class': 'textAuthor'}).text
+# publisher = soup.find('div', {'class': 'textPublisher'}).text # tem dois
+# srcformat = soup.find('div', {'class': 'textFormatType'}).text
+# subject = soup.find('div', {'class': 'textSubject'}).text
+# collections = soup.find('div', {'class': 'textCollections'}).text
+# bookpage = soup.find('div', {'class': 'textAbstracts'}).a.attrs['href']
 
 
 bookids    = soup.findAll('div', {'class': 'textId'})
@@ -114,24 +112,65 @@ srcformats = soup.findAll('div', {'class': 'textFormatType'})
 subjects   = soup.findAll('div', {'class': 'textSubject'})
 collects   = soup.findAll('div', {'class': 'textCollections'})
 # bookpages  = soup.findAll('div', {'class': 'textAbstracts'}).a.attrs['href']
+# soup.findAll('div', {'class': 'textId'}).a.attrs['href']
 
 
-soup.findAll('div', {'class': 'textId'}).a.attrs['href']
 
-titles = soup.findAll('div', {'class': 'textTitle'})
-publishers = soup.findAll('div', {'class': 'textPublisher'})
+df = pd.DataFrame(columns = ['bookid', 'title', 'author', 'lang', 'publisher', 'orgFormat', 'subj', 'collection', 'link'])
+# TODO remove 'Book Id: ' from bookid
+# TODO add link properly
+
+# para cada livro identificado
+for i in range(len(bookids)):
+    # criar uma lista com os metadados desejados
+    # bookid, title, author, lang, publisher, orgFormat, subj, collection, link
+    lista = [bookids[i].text, titles[i].text, authors[i].text, publishers[i*2].text, publishers[i*2 +1].text, srcformats[i].text, subjects[i].text, collects[i].text, 'link']
+    # remove line breaks, tabs and carriage returns
+    lista = [sub.replace('\n', '') for sub in lista]
+    lista = [sub.replace('\t', '') for sub in lista]
+    lista = [sub.replace('\r', '') for sub in lista]
+    df.loc[len(df)] = lista
 
 
-len(titles)
-len(publishers)
 
+df.to_csv('output/self_pub.tsv', sep='\t', encoding='utf-8')
 
 
 count = 1
-for i in titles:
+for i in publishers:
     print(count)
     print(i.text)
     count += 1
+
+
+len(publishers)
+
+publishers[0]
+
+
+
+# # df.loc[book_id] = [book_id, meta_list[0], meta_list[1], meta_list[2], meta_list[3], meta_list[4]]
+# df.loc[book_id] = [meta_list[0], meta_list[1], meta_list[2], meta_list[3], meta_list[4]]
+
+
+
+for i in range(len(titles)):
+    # print(bookids[i].text)
+    # df.loc[len(df)] = [bookids[i].text, titles[i].text, authors[i].text, publishers[i].text, srcformats[i].text, subjects[i].text, collects[i].text]
+    print([bookids[i].text, titles[i].text, authors[i].text, publishers[i].text, srcformats[i].text, subjects[i].text, collects[i].text])
+    
+    # pd.concat([new_row, df.loc[:]]).reset_index(drop=True)
+
+
+df
+bookids[0].text
+
+lista = [bookids[i].text, titles[i].text, authors[i].text, publishers[i].text, publishers[i*2].text, srcformats[i].text, subjects[i].text, collects[i].text, 'link']
+len(lista)
+df
+df.loc[len(df)] = lista
+
+
 
 
 
