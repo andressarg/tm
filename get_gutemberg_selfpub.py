@@ -79,6 +79,7 @@ def download_pdf_file(url):
 
 
 '''
+1. METADADOS
 Para descobrir o que precisamos baixar do site,
 realizei a busca manualmente em http://self.gutenberg.org/Home,
 selecionando apenas livros em portugues.
@@ -146,10 +147,12 @@ for n in pages:
         # add list to DF
         df.loc[len(df)] = meta_list
 
-
+# salvar os metadados
 df.to_csv('output/self_pub.tsv', sep='\t', encoding='utf-8')
 
-
+'''
+2. BAIXAR OS LIVROS
+'''
 # pegar o link de download do livro
 for l in df['link']:
     print(l)
@@ -174,20 +177,12 @@ for l in df['link']:
     download_pdf_file(pdf_link3)
 
 
-df
-
-
-
-
-# a = 'http://self.gutenberg.org/eBooks' + df['link'][2]
-# print(a)
-# b = download_url(a)
-
-
 '''
+3. PDF 2 PLAIN TEXT
 conversao para plain text
 '''
 from PyPDF2 import PdfReader
+# https://pypdf2.readthedocs.io/en/stable/user/extract-text.html
 import pathlib 
 
 def get_file_list(files_path):
@@ -203,6 +198,21 @@ def get_file_list(files_path):
 
 file_list = get_file_list('input/self_pdf')
 
+# for val in file_list:
+    # pdf_reader = PdfReader(val)
+    
+    # pdf_text = ''
+
+    # for n in range(len(pdf_reader.pages)):
+    #     pdf_pages = pdf_reader.pages[n]
+    #     pdf_text += pdf_pages.extract_text()
+
+    # # write book content to file
+    # with open(f"input/self_txt/{val.stem}.txt", 'w', encoding='utf-8') as file:
+    #     file.write(pdf_text)
+
+
+
 for val in file_list:
     pdf_reader = PdfReader(val)
     
@@ -210,89 +220,19 @@ for val in file_list:
 
     for n in range(len(pdf_reader.pages)):
         pdf_pages = pdf_reader.pages[n]
-        pdf_text += pdf_pages.extract_text()
+        try:
+            pdf_text += pdf_pages.extract_text()
+        except:
+            print(f'error on page {n} of file: {val.stem}')
+            continue
 
     # write book content to file
-    with open(f"input/self_txt/{val.stem}.txt", 'w', encoding='utf-8') as file:
-        file.write(pdf_text)
+    try:
+        with open(f"input/self_txt/{val.stem}.txt", 'w', encoding='utf-8') as file:
+            file.write(pdf_text)
+    except:
+        print(f'error writing file {val.stem}')
 
-
-
-val = '/home/minas/coding/tm_paper/input/self_pdf/20110818215632contos-all.pdf'
-
-
-pdf_reader = PdfReader(val)
-    
-pdf_text = ''
-
-for n in range(len(pdf_reader.pages)):
-    pdf_pages = pdf_reader.pages[n]
-    pdf_text += pdf_pages.extract_text()
-
-# write book content to file
-with open(f"test.txt", 'w', encoding='utf-8') as file:
-    file.write(pdf_text)
-
-
-pdf_text = pdf_pages.extract_text() 
-
-
-pdffileobj=open('1.pdf','rb')
- 
-#create reader variable that will read the pdffileobj
-pdfreader=PyPDF2.PdfFileReader(pdffileobj)
- 
-#This will store the number of pages of this pdf file
-x=pdfreader.numPages
- 
-#create a variable that will select the selected number of pages
-pageobj=pdfreader.getPage(x+1)
- 
-#(x+1) because python indentation starts with 0.
-#create text variable which will store all text datafrom pdf file
-text=pageobj.extractText()
- 
-#save the extracted data from pdf to a txt file
-#we will use file handling here
-#dont forget to put r before you put the file path
-#go to the file location copy the path by right clicking on the file
-#click properties and copy the location path and paste it here.
-#put "\\your_txtfilename"
-file1=open(r"C:\Users\SIDDHI\AppData\Local\Programs\Python\Python38\\1.txt","a")
-file1.writelines(text)
-
-
-
-# voltar aqui
-
-
-
-
-
-
-######################àà
-
-
-# write metadata to file
-df.to_csv('output/books_metadata.tsv', sep='\t', encoding='utf-8')
-    
-###############à
-# teste comeca
-book_id = '55797'
-url_plain = f'https://www.gutenberg.org/cache/epub/{book_id}/pg{book_id}.txt'
-# TODO add an try excep here
-url_plain = f'https://www.gutenberg.org/files/{book_id}/{book_id}-0.txt'
-data_plain = download_url(url_plain)
-
-
-
-def download_url(urlpath):
-    with urlopen(urlpath, timeout=3) as connection:
-        # return content of the url read as bytes
-        return connection.read()
-
-
-a = download_url(f'https://www.gutenberg.org/cache/epub/{book_id}/pg{book_id}.txt')
 
 
 
