@@ -37,7 +37,7 @@ def download_url(urlpath):
     '''
     try:
         # open a connection to the server
-        with urlopen(urlpath, timeout=3) as connection:
+        with urlopen(urlpath, timeout=5) as connection:
             # return content of the url read as bytes
             return connection.read()
     except:
@@ -159,6 +159,7 @@ for l in df['link']:
     page_link = 'http://self.gutenberg.org/eBooks' + l
 
     # baixar conteudo
+    print(f"downloading {page_link}")
     page_book = download_url(page_link)
 
     # BS parser
@@ -173,32 +174,96 @@ for l in df['link']:
     download_pdf_file(pdf_link3)
 
 
+df
+
+
+
+
+# a = 'http://self.gutenberg.org/eBooks' + df['link'][2]
+# print(a)
+# b = download_url(a)
+
+
 '''
-http://uploads.worldlibrary.net/uploads/pdf/20121014234847o_caminho_da_verdade_pdf.pdf
-http://Uploads.WorldLibrary.org/uploads/userfiles/20121014235904o_caminho_da_verdade_jpg.jpg
+conversao para plain text
 '''
+from PyPDF2 import PdfReader
+import pathlib 
+
+def get_file_list(files_path):
+    '''
+    create a list and append the files names to it
+    '''
+    workingDir = pathlib.Path(files_path)
+    file_list = []
+    for f in workingDir.iterdir():
+        file_list.append(f)
+    return file_list
 
 
-download_url("http://self.gutenberg.org/eBooks/eBooks/WPLBN0003468721-O-Mago-de-Camelot--A-saga-de-Merlin-para-coroar-um-drag-o-by-Hip-lito-Marcelo.aspx?&Words=")
+file_list = get_file_list('input/self_pdf')
 
-from urllib.error import HTTPError
+for val in file_list:
+    pdf_reader = PdfReader(val)
+    
+    pdf_text = ''
 
+    for n in range(len(pdf_reader.pages)):
+        pdf_pages = pdf_reader.pages[n]
+        pdf_text += pdf_pages.extract_text()
 
-
-
-# getting the content
-try:
-    connection = urlopen("http://self.gutenberg.org/eBooks/eBooks/WPLBN0003468721-O-Mago-de-Camelot--A-saga-de-Merlin-para-coroar-um-drag-o-by-Hip-lito-Marcelo.aspx?&Words=")
-    data_plain = connection.read()
-    print(f'downloading ')
-except HTTPError as err:
-    print(err.code)
-
-
-page_soup = BeautifulSoup(data_plain, 'html.parser')
+    # write book content to file
+    with open(f"input/self_txt/{val.stem}.txt", 'w', encoding='utf-8') as file:
+        file.write(pdf_text)
 
 
 
+val = '/home/minas/coding/tm_paper/input/self_pdf/20110818215632contos-all.pdf'
+
+
+pdf_reader = PdfReader(val)
+    
+pdf_text = ''
+
+for n in range(len(pdf_reader.pages)):
+    pdf_pages = pdf_reader.pages[n]
+    pdf_text += pdf_pages.extract_text()
+
+# write book content to file
+with open(f"test.txt", 'w', encoding='utf-8') as file:
+    file.write(pdf_text)
+
+
+pdf_text = pdf_pages.extract_text() 
+
+
+pdffileobj=open('1.pdf','rb')
+ 
+#create reader variable that will read the pdffileobj
+pdfreader=PyPDF2.PdfFileReader(pdffileobj)
+ 
+#This will store the number of pages of this pdf file
+x=pdfreader.numPages
+ 
+#create a variable that will select the selected number of pages
+pageobj=pdfreader.getPage(x+1)
+ 
+#(x+1) because python indentation starts with 0.
+#create text variable which will store all text datafrom pdf file
+text=pageobj.extractText()
+ 
+#save the extracted data from pdf to a txt file
+#we will use file handling here
+#dont forget to put r before you put the file path
+#go to the file location copy the path by right clicking on the file
+#click properties and copy the location path and paste it here.
+#put "\\your_txtfilename"
+file1=open(r"C:\Users\SIDDHI\AppData\Local\Programs\Python\Python38\\1.txt","a")
+file1.writelines(text)
+
+
+
+# voltar aqui
 
 
 
@@ -206,219 +271,6 @@ page_soup = BeautifulSoup(data_plain, 'html.parser')
 
 
 ######################àà
-# teste
-val = f"http://self.gutenberg.org/Results.aspx?PageIndex=2&SearchCollection=Authors+Community&EverythingType=0&TitleType=0&AuthorType=0&SubjectType=0&PublisherType=0&LanguageDropDownValue=Portuguese&DisplayMode=List"
-
-# baixar pagina
-page2 = download_url(val)
-
-# parser 
-soup = BeautifulSoup(page2, 'html.parser')
-
-# get metadata
-
-# bookid = soup.find('div', {'class': 'textId'}).text
-# title = soup.find('div', {'class': 'textTitle'}).text
-# author = soup.find('div', {'class': 'textAuthor'}).text
-# publisher = soup.find('div', {'class': 'textPublisher'}).text # tem dois
-# srcformat = soup.find('div', {'class': 'textFormatType'}).text
-# subject = soup.find('div', {'class': 'textSubject'}).text
-# collections = soup.find('div', {'class': 'textCollections'}).text
-# bookpage = soup.find('div', {'class': 'textAbstracts'}).a.attrs['href']
-
-
-bookids    = soup.findAll('div', {'class': 'textId'})
-titles     = soup.findAll('div', {'class': 'textTitle'})
-authors    = soup.findAll('div', {'class': 'textAuthor'})
-publishers = soup.findAll('div', {'class': 'textPublisher'}) # tem dois
-srcformats = soup.findAll('div', {'class': 'textFormatType'})
-subjects   = soup.findAll('div', {'class': 'textSubject'})
-collects   = soup.findAll('div', {'class': 'textCollections'})
-# bookpages  = soup.findAll('div', {'class': 'textAbstracts'}).a.attrs['href']
-# soup.findAll('div', {'class': 'textId'}).a.attrs['href']
-
-
-
-# df = pd.DataFrame(columns = ['bookid', 'title', 'author', 'lang', 'publisher', 'orgFormat', 'subj', 'collection', 'link'])
-
-
-# para cada livro identificado
-for i in range(len(bookids)):
-    # criar uma lista com os metadados desejados
-    # bookid, title, author, lang, publisher, orgFormat, subj, collection, link
-    lista = [bookids[i].text, titles[i].text, authors[i].text, publishers[i*2].text, publishers[i*2 +1].text, srcformats[i].text, subjects[i].text, collects[i].text, bookids[i].a.attrs['href']]
-    
-    # remove line breaks, tabs and carriage returns
-    lista = [sub.replace('\n', '') for sub in lista]
-    lista = [sub.replace('\t', '') for sub in lista]
-    lista = [sub.replace('\r', '') for sub in lista]
-
-    # remove 'Book Id: ' from bookid
-    lista[0] = lista[0][9:]
-
-    df.loc[len(df)] = lista
-
-
-df.to_csv('output/self_pub.tsv', sep='\t', encoding='utf-8')
-
-bookids[0].a.attrs['href']
-
-count = 1
-for i in publishers:
-    print(count)
-    print(i.text)
-    count += 1
-
-
-
-
-
-# # df.loc[book_id] = [book_id, meta_list[0], meta_list[1], meta_list[2], meta_list[3], meta_list[4]]
-# df.loc[book_id] = [meta_list[0], meta_list[1], meta_list[2], meta_list[3], meta_list[4]]
-
-
-
-for i in range(len(titles)):
-    # print(bookids[i].text)
-    # df.loc[len(df)] = [bookids[i].text, titles[i].text, authors[i].text, publishers[i].text, srcformats[i].text, subjects[i].text, collects[i].text]
-    print([bookids[i].text, titles[i].text, authors[i].text, publishers[i].text, srcformats[i].text, subjects[i].text, collects[i].text])
-    
-    # pd.concat([new_row, df.loc[:]]).reset_index(drop=True)
-
-
-df
-bookids[0].text
-
-lista = [bookids[i].text, titles[i].text, authors[i].text, publishers[i].text, publishers[i*2].text, srcformats[i].text, subjects[i].text, collects[i].text, 'link']
-len(lista)
-df
-df.loc[len(df)] = lista
-
-
-
-
-
-
-#div textTitle
-
-#####################à
-# def download_url(urlpath):
-#     ''' 
-#     download content from an url address
-#     Args: 
-#         urlpath (str): the url path
-#     Returns:
-#         connection.read() (bytes): the content of the page 
-#     '''
-#     try:
-#         # open a connection to the server
-#         with urlopen(urlpath, timeout=3) as connection:
-#             # return content of the url read as bytes
-#             return connection.read()
-#     except:
-#         # return None
-#         print(f"There was an issue when trying to download{urlpath}")
-
-def download_url(urlpath):
-    ''' 
-    download content from an url address
-    Args: 
-        urlpath (str): the url path
-    Returns:
-        connection.read() (bytes): the content of the page 
-    '''
-    # open a connection to the server
-    with urlopen(urlpath, timeout=3) as connection:
-        # return content of the url read as bytes
-        return connection.read()
-
-# create a list with the books id
-
-# book_id = "44540" # cinco minutos j de alencar
-# book_id = "55682" # quincas borba machado
-# book_id = "31971" # o crime do padre amaro eca de queiros
-# book_id_list = ["44540", "55682", "31971"]
-
-'''
-54829   Memorias Posthumas de Braz Cubas
-55682   Quincas Borba
-55752   Dom Casmurro
-55797   Memorial de Ayres
-56737   Esau e Jacob
-57001   Papeis Avulsos
-67935   Reliquias de Casa Velha
-33056   Historias Sem Data
-53101   A Mao e A Luva
-67162   Helena
-67780   Yayá Garcia
-61653   Poesias Completas
-'''
-
-
-book_id_list = ["54829", "55682", "55752", "55797", "56737", "57001", "67935", "33056", "53101", "67162", "67780", "61653"]
-
-
-'''
-- sometimes the same data content is available in different formats. it is a good idea to test extracting two different formats to get an idea which one will be better for the project.
-- it is almost always easier to work with plain text, but preserving section breaks can lead to further analysis
-- in our case, getting the data from html format sounds better and easier to (a) preserve the sections boundaries (b) to make cleaning easier
-'''
-
-# to get the books from the plain format
-
-# create empty df to store the metadata
-
-df = pd.DataFrame(columns = ['author', 'title', 'lang', 'subj', 'datepub'])
-
-for book_id in book_id_list:
-    # # url for plain text book
-    # url_plain = f'https://www.gutenberg.org/cache/epub/{book_id}/pg{book_id}.txt'
-
-    # # download the content
-    # print(f'downloading content for {book_id}...')
-    # data_plain = download_url(url_plain)
-
-    # getting the content
-    try:
-        connection = urlopen(f'https://www.gutenberg.org/cache/epub/{book_id}/pg{book_id}.txt')
-        data_plain = connection.read()
-        print(f'downloading data for {book_id}, from link 1')
-    except HTTPError as err:
-        if err.code == 404: # not found error (link doesnt exist)
-            connection = urlopen(f'https://www.gutenberg.org/files/{book_id}/{book_id}-0.txt')
-            data_plain = connection.read()
-            print(f'downloading data for {book_id}, from link 2')
-        else:
-            print(f'error {err.code} when downloading file {book_id}')
-            continue
-
-    # plain text link doesnt include metadata. 
-    # we have to go to the previous page
-    # TODO add try exept to metadata 
-    # if it doesnt exist, add NA to the respective row
-    url_meta = f'https://www.gutenberg.org/ebooks/{book_id}'
-    metadata = download_url(url_meta)
-
-    # parse document 
-    soup = BeautifulSoup(metadata, 'html.parser')
-
-    # get metadata
-    author = soup.find('a', {'about': re.compile(r'\/authors\/.*')}).text
-    lang = soup.find('a', {'href': re.compile(r'\/browse\/languages\/.*')}).text
-    subj = soup.find('a', {'href': re.compile(r'\/ebooks\/subject\/*')}).text
-    title = soup.find('td', {'itemprop': 'headline'}).text
-    datepub = soup.find('td', {'itemprop': 'datePublished'}).text
-
-    # remove line breaks
-    meta_list = [sub.replace('\n', '') for sub in [author, title, lang, subj, datepub]]
-
-
-    # df.loc[book_id] = [book_id, meta_list[0], meta_list[1], meta_list[2], meta_list[3], meta_list[4]]
-    df.loc[book_id] = [meta_list[0], meta_list[1], meta_list[2], meta_list[3], meta_list[4]]
-
-    # write book content to file
-    with open(f"input/{book_id}.txt", 'wb') as file:
-        file.write(data_plain)
 
 
 # write metadata to file
@@ -443,137 +295,4 @@ def download_url(urlpath):
 a = download_url(f'https://www.gutenberg.org/cache/epub/{book_id}/pg{book_id}.txt')
 
 
-
-
-
-from urllib.error import HTTPError
-
-
-
-
-try:
-    a = urlopen(f'https://www.gutenberg.org/cache/epub/{book_id}/pg{book_id}.txt')
-    b = a.read()
-    print('first')
-except HTTPError as err:
-    if err.code == 404: # not found error (link doesnt exist)
-        a = urlopen(f'https://www.gutenberg.org/files/{book_id}/{book_id}-0.txt')
-        b = a.read()
-        print('second')
-    else:
-        print(f'error {err.code} when downloading file')
-
-
-
-
-
-for book_id in book_id_list:
-
-    # getting the content
-    try:
-        connection = urlopen(f'https://www.gutenberg.org/cache/epub/{book_id}/pg{book_id}.txt')
-        data_plain = connection.read()
-        print(f'downloading data for {book_id}, from link 1')
-    except HTTPError as err:
-        if err.code == 404: # not found error (link doesnt exist)
-            connection = urlopen(f'https://www.gutenberg.org/files/{book_id}/{book_id}-0.txt')
-            data_plain = connection.read()
-            print(f'downloading data for {book_id}, from link 2')
-        else:
-            print(f'error {err.code} when downloading file {book_id}')
-            continue
-
-    
-    # plain text link doesnt include metadata. 
-    # we have to go to the previous page
-    url_meta = f'https://www.gutenberg.org/ebooks/{book_id}'
-    metadata = download_url(url_meta)
-
-    # parse document 
-    soup = BeautifulSoup(metadata, 'html.parser')
-
-    # get metadata
-    author = soup.find('a', {'about': re.compile(r'\/authors\/.*')}).text
-    lang = soup.find('a', {'href': re.compile(r'\/browse\/languages\/.*')}).text
-    subj = soup.find('a', {'href': re.compile(r'\/ebooks\/subject\/*')}).text
-    title = soup.find('td', {'itemprop': 'headline'}).text
-    datepub = soup.find('td', {'itemprop': 'datePublished'}).text
-
-    # remove line breaks
-    meta_list = [sub.replace('\n', '') for sub in [author, title, lang, subj, datepub]]
-
-
-    # df.loc[book_id] = [book_id, meta_list[0], meta_list[1], meta_list[2], meta_list[3], meta_list[4]]
-    df.loc[book_id] = [meta_list[0], meta_list[1], meta_list[2], meta_list[3], meta_list[4]]
-
-    # write book content to file
-    with open(f"input/{book_id}.txt", 'wb') as file:
-        file.write(data_plain)
-
-df
-
-# https://www.gutenberg.org/cache/epub/54829/pg54829.txt
-# https://www.gutenberg.org/files/54829/54829-0.txt
-# https://www.gutenberg.org/files/55797/55797-0.txt
-
-# teste termina
-###########àà####
-
-# to get the books from html
-# create empty df to store the metadata
-
-df = pd.DataFrame(columns = ['author', 'title', 'lang', 'subj', 'datepub'])
-
-for book_id in book_id_list:
-    url_html = f'https://www.gutenberg.org/cache/epub/{book_id}/pg{book_id}-images.html'
-    data_html = download_url(url_html)
-
-    # parse
-    soup = BeautifulSoup(data_html, 'html.parser')
-
-    # get metadata
-    author = soup.find('meta', {'name' : 'AUTHOR'})['content'] if soup.find('meta', {'name' : 'AUTHOR'}) is not None else 'NA'
-    lang = soup.find('meta', {'name' : 'dc.language'})['content'] if soup.find('meta', {'name' : 'dc.language'}) is not None else 'NA'
-    subj = soup.find('meta', {'name' : 'dc.subject'})['content'] if soup.find('meta', {'name' : 'dc.subject'}) is not None else 'NA'
-    title = soup.find('meta', {'property' : 'og:title'})['content'] if soup.find('meta', {'property' : 'og:title'}) is not None else 'NA'
-    datepub = soup.find('meta', {'name' : 'dcterms.created'})['content'] if soup.find('meta', {'name' : 'dcterms.created'}) is not None else 'NA'
-
-    ## remove unnecessary elements
-    # style
-    for i in soup.find_all('style'):
-        i.decompose()
-
-    # boiler plates
-    for i in soup.find_all('section', {'class': re.compile('.*boilerplate.*')}):
-        i.decompose()
-
-    # editor comments
-    for i in soup.find_all('div', {'class': 'fbox'}):
-        i.decompose()
-
-    # page numbers
-    for i in soup.find_all('span', {'class': 'pagenum'}):
-        i.decompose()
-
-    # remove br tags
-    for i in soup.find_all('br'):
-        i.unwrap()
-
-    # remove head
-    soup.find('head').decompose()
-
-    # get metadata
-    df.loc[book_id] = [author, title, lang, subj, datepub]
-
-
-    # write to file with tags
-    with open(f'input/html/{book_id}.html', 'w', encoding = 'utf-8') as file:
-        file.write(str(soup.prettify()))
-    # write to file without tags
-    with open(f'input/plain/{book_id}.txt', 'w', encoding = 'utf-8') as file:
-        file.write(soup.text)
-
-
-# write metadata to file
-df.to_csv('output/books_metadata.tsv', sep='\t', encoding='utf-8')
 
